@@ -7,7 +7,7 @@ export const  countryApi = createApi({
     baseQuery: fetchBaseQuery({
         baseUrl: "https://restcountries.com/v3.1/"
     }),
-    tagTypes: ["Countries"],
+    tagTypes: ["Countries", "Country"],
     endpoints: (builder) => ({
         getAll: builder.query<ICountry[], void>({
             query: () => `all?fields=${DISPLAYED_FIELD}`,
@@ -20,6 +20,10 @@ export const  countryApi = createApi({
         getIndependent: builder.query<ICountry[], boolean>({
             query: (status) => `independent?status=${status}&fields=${DISPLAYED_FIELD}`,
             providesTags: [{type: "Countries", id: "LIST"}],
+        }),
+        getSingleCountry: builder.query<ICountry[], string>({
+            query: (countryName) => `name/${countryName}?fullText=true`,
+            providesTags: [{ type: "Country", id: "LIST" }],
         }),
     })
 

@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useRef, useState} from 'react'
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
 import DataSummaryCard from '../../lib/components/DataSummaryCard';
 import {countryApi} from "../../redux/RTK/country.api";
 import CountriesTable from "./CountriesTable";
@@ -14,7 +14,7 @@ const Country = () => {
     const [filter, setFilter] = useState<null | Filter>(null);
 
 
-    const {data: countries, isFetching, error} =
+    const {data: countries, isFetching, error,refetch} =
         filter
         ?
          filter.field === "independent"
@@ -24,24 +24,34 @@ const Country = () => {
          countryApi.useGetByFieldQuery({ field: filter.field, value: filter.value as string })
         : countryApi.useGetAllQuery();
 
+    const handleSetFilter = useCallback((filteredField: Filter | null) => {
+        setFilter(filteredField);
+    }, []);
 
 
+    const countryStats = useMemo(() => {
+        const regionStats = countries?.reduce(
+            (acc, country) => {
+                acc.population += country.population;
+                if (country.independent) acc.independentCount++;
+                if (country.unMember) acc.unMemberCount++;
 
-  const countryStats = useMemo(() => {
-    return countries?.reduce(
-        (acc, country) => {
-          acc.population += country.population;
-          if (country.independent) acc.independentCount++;
-          if (country.unMember) acc.unMemberCount++;
-          return acc;
-        },
-        {
-          population: 0,
-          independentCount: 0,
-          unMemberCount: 0,
-        }
-    );
-  }, [countries]);
+                if (!acc.regions.some((r) => r.label === country.region)) {
+                    acc.regions.push({ label: country.region, value: country.region });
+                }
+
+                return acc;
+            },
+            {
+                population: 0,
+                independentCount: 0,
+                unMemberCount: 0,
+                regions: [{label: "All", value: ""}],
+            }
+        );
+
+        return regionStats;
+    }, [countries]);
 
     useEffect(() => {
         if (error) {
@@ -67,7 +77,17 @@ const Country = () => {
         )}
     </div>
 
-      {countries && <CountriesTable countries={countries} loading={isFetching} error={error} filter={filter} setFilter={setFilter}/>}
+      {countries &&
+          <CountriesTable
+              countries={countries}
+              loading={isFetching}
+              error={error}
+              filter={filter}
+              setFilter={handleSetFilter}
+              regions={countryStats?.regions}
+              refresh={refetch}
+          />
+      }
     </>
   )
 }

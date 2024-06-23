@@ -7,7 +7,7 @@ import CountryInfo from './CountryInfo';
 const CountriesRoutes = () => (
   <ErrorBoundaryRoutes>
     <Route index element={<Country />} />
-    <Route path=":id" element={<CountryInfo />} />
+    <Route path=":countryName" element={<CountryInfo />} />
   </ErrorBoundaryRoutes>
 );
 

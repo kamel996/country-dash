@@ -15,7 +15,9 @@ type CountriesTableProps = {
     loading: boolean;
     error: any;
     filter: Filter | null;
-    setFilter: React.Dispatch<React.SetStateAction<Filter | null>>;
+    setFilter:(filteredField: Filter | null) => void;
+    regions?: {label: string, value: string}[];
+    refresh: () => any;
 }
 
 const filters = {
@@ -23,19 +25,40 @@ const filters = {
     capital: {value: "", matchMode: FilterMatchMode.EQUALS},
 }
 
-export const CountriesTable = ({countries, loading, error, filter, setFilter}: CountriesTableProps) => {
+export const CountriesTable = ({countries, loading, error,regions, filter, setFilter, refresh}: CountriesTableProps) => {
 
 
     const onFilter  = (event) => {
         const filteredField = Object.entries(event.filters)
             .map(([field, { value }]: any) => ({ field, value }))
             .find(({ value }) => value !== '');
+
         if(filteredField){
             setFilter(filteredField as Filter)
         }else{
             setFilter(null)
         }
     }
+
+    const regionFilterTemplate = () => {
+        const handleDropdownChange = (e) => {
+            if(e.value !== ""){
+                setFilter({field: "region", value: e.value})
+            }else{
+                setFilter(null);
+            }
+        };
+
+        return (
+            <Dropdown
+                options={regions}
+                value={filter?.value}
+                onChange={handleDropdownChange}
+                placeholder={"Filter by Region"}
+                optionValue={"value"}
+            />
+        );
+    };
 
     const independentFilterTemplate = () => {
         const handleDropdownChange = (e) => {
@@ -65,10 +88,10 @@ export const CountriesTable = ({countries, loading, error, filter, setFilter}: C
 
 
     const nameColumnTemplate = (rowData: ICountry) => {
-        const editUrl = ``;
+        const editUrl = `/${rowData.name.common}`;
         return (
             <Link to={editUrl}>
-                {rowData.name.official}
+                {rowData.name.common}
             </Link>
         );
     };
@@ -91,7 +114,7 @@ export const CountriesTable = ({countries, loading, error, filter, setFilter}: C
             <span className="text-xl text-900 font-bold">Countries</span>
             <div className="ms-auto">
                 <Button label={"Refresh List"} severity="secondary" raised className="me-5" color="info"
-                        onClick={() => {}} disabled={loading}>
+                        onClick={refresh} disabled={loading}>
                     &nbsp;
                     <i className="pi pi-spin pi-refresg" style={{fontSize: '2rem'}}></i>
                 </Button>
@@ -137,13 +160,16 @@ export const CountriesTable = ({countries, loading, error, filter, setFilter}: C
                         filter={filter?.field === "capital" || !filter} filterPlaceholder={"Search by Capital"}  showClearButton={false} showFilterMenu={false}
                 />
                 <Column field="flag" header={"Flag"} />
+                <Column field="region" header={"Region"}
+                        filter={filter?.field === "region" || !filter} filterElement={regionFilterTemplate}  showClearButton={false} showFilterMenu={false}
+                />
                 <Column field="currencies" header={"Currency"} body={currencyColumnTemplate} />
-                <Column field="population" header={"Population"} />
-                <Column header={"UN Member"} body={isUNMemberTemplate} />
                 <Column header={"Independent"}
-                        filter={filter?.field === "independent" || !filter} filterElement={independentFilterTemplate}
+                        filter={filter?.field === "independent" || !filter} filterElement={independentFilterTemplate}  showClearButton={false} showFilterMenu={false}
                         body={isIndependentTemplate}
                 />
+                <Column header={"UN Member"} body={isUNMemberTemplate} />
+                <Column field="population" header={"Population"} />
 
 
 
